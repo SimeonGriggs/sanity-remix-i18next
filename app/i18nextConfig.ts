@@ -1,5 +1,7 @@
 import groq from "groq";
-import sanityClient from "~/sanityClient";
+import type { BackendOptions, RequestCallback } from "i18next-http-backend";
+
+import client from "~/sanity";
 
 export const supportedLngs = ["en_US", "no", "nl"];
 const fallbackLng = supportedLngs[0];
@@ -10,7 +12,7 @@ export async function loadResources(lng: string, ns: string) {
   let data;
 
   if (ns === "common") {
-    data = await sanityClient.fetch(
+    data = await client.fetch(
       groq`*[_id == "labelGroup"][0].labels[]{
       key,
       // Pick language-specific object item
@@ -19,7 +21,7 @@ export async function loadResources(lng: string, ns: string) {
       { language: lng, baseLanguage: fallbackLng }
     );
   } else if (ns === "home") {
-    data = await sanityClient.fetch(
+    data = await client.fetch(
       groq`*[_type == "presenter"][0]{
           name,
           // Pick language-specific array item
@@ -47,7 +49,7 @@ export default {
   react: { useSuspense: false },
   backend: {
     loadPath: "{{lng}}|{{ns}}",
-    request: (options, url, payload, callback) => {
+    request: (options: BackendOptions, url: string, payload: unknown, callback: RequestCallback) => {
       try {
         const [lng, ns] = url.split("|");
         console.log({ lng, ns });
