@@ -36,8 +36,7 @@ export let action: ActionFunction = async ({ request }) => {
 };
 
 export default function Component() {
-  const data = useLoaderData()
-  console.log(data);
+  // const data = useLoaderData()
 
   let translation = useTranslation();
   const { t } = translation;
@@ -54,7 +53,7 @@ export default function Component() {
       ))}
       <hr />
       <h1>
-        {locale}: {t("greeting")}
+        {locale}: {t("course.singular")}
       </h1>
     </div>
   );
