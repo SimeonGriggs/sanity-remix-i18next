@@ -1,14 +1,14 @@
-import Backend from 'i18next-fs-backend';
-import { RemixI18Next } from 'remix-i18next';
+import Backend from 'i18next-fs-backend'
+import {RemixI18Next} from 'remix-i18next'
 
-import i18nextConfig from '~/i18nextConfig'; // your i18n configuration file
-import { i18nCookie } from '~/cookies';
+import i18nextConfig from '~/i18nextConfig' // your i18n configuration file
+import {i18nCookie} from '~/cookies'
 
 let i18next = new RemixI18Next({
   detection: {
     supportedLanguages: i18nextConfig.supportedLngs,
     fallbackLanguage: i18nextConfig.fallbackLng,
-    cookie: i18nCookie
+    cookie: i18nCookie,
   },
   // This is the configuration for i18next used
   // when translating messages server-side only
@@ -19,6 +19,6 @@ let i18next = new RemixI18Next({
   // Tip: You could pass `resources` to the `i18next` configuration and avoid
   // a backend here
   backend: Backend,
-});
+})
 
-export default i18next;
+export default i18next

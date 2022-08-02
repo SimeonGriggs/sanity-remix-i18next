@@ -1,3 +1,17 @@
 {
-  "extends": ["@remix-run/eslint-config", "@remix-run/eslint-config/node"]
+  "ignorePatterns": [".cache", "node_modules", "build"],
+  "extends": ["@sanity/eslint-config-studio", "prettier"],
+  "plugins": ["prettier"],
+  "rules": {
+    "react/prop-types": 0,
+    "prettier/prettier": [
+      "error",
+      {
+        "semi": false,
+        "printWidth": 100,
+        "bracketSpacing": false,
+        "singleQuote": true
+      }
+    ]
+  }
 }
