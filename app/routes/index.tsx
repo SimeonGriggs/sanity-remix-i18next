@@ -1,14 +1,14 @@
 import type {ActionFunction, LoaderFunction, MetaFunction} from '@remix-run/node'
 import {redirect} from '@remix-run/node'
 import {json} from '@remix-run/node'
-import {Form} from '@remix-run/react'
+import {Link} from '@remix-run/react'
 import {useTranslation} from 'react-i18next'
-import {useLocale} from 'remix-i18next'
+
 import {i18nCookie} from '~/cookies'
-import i18nConfig, {supportedLngs} from '~/i18nextConfig'
+import {supportedLngs} from '~/i18nextConfig'
 import i18next from '~/i18next.server'
 
-// This tells remix to load the "home" namespace
+// This tells remix-i18n to load the "home" namespace
 export let handle = {
   i18n: 'home',
 }
@@ -24,44 +24,44 @@ export let loader: LoaderFunction = async ({request}) => {
   return json({title})
 }
 
-export let action: ActionFunction = async ({request}) => {
+export let action: ActionFunction = async (props) => {
+  const {request} = props
+  const requestUrl = new URL(request.url)
   const bodyParams = await request.formData()
-  const locale = bodyParams.get('locale')
-  let cookie
 
-  if (locale && supportedLngs.includes(String(locale))) {
-    cookie = locale
+  const redirectPath = String(bodyParams?.get('redirect'))
+  const locale = String(bodyParams?.get('locale'))
+  let options = {}
+
+  if (locale && supportedLngs.includes(locale)) {
+    options = {
+      headers: {
+        'Set-Cookie': await i18nCookie.serialize(locale),
+      },
+    }
   }
 
-  return redirect('/', {
-    headers: {
-      'Set-Cookie': await i18nCookie.serialize(cookie),
-    },
-  })
+  return redirect(redirectPath ?? requestUrl.pathname, options)
 }
 
-export default function Component() {
+export default function Home() {
   let translation = useTranslation()
   const {t} = translation
 
-  const locale = useLocale()
+  const legalPages = t('legalPages', {ns: 'home', returnObjects: true}) ?? []
 
   return (
     <div>
-      <Form method="post">
-        {i18nConfig.supportedLngs.map((lng) => (
-          <button key={lng} name="locale" value={lng} disabled={locale === lng} type="submit">
-            {lng}
-          </button>
-        ))}
-      </Form>
-      <hr />
       <h1>{t('course.singular')}</h1>
-      <p>
-        <strong>{t('name', {ns: 'home'})}</strong>
-        <br />
-        <em>{t('title', {ns: 'home'})}</em>
-      </p>
+      {legalPages && legalPages?.length > 0 ? (
+        <section>
+          {legalPages.map((page) => (
+            <p key={page._id}>
+              <Link to={`/legal/${page.slug.current}`}>{page.title}</Link>
+            </p>
+          ))}
+        </section>
+      ) : null}
     </div>
   )
 }

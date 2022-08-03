@@ -1,45 +1,44 @@
 import groq from 'groq'
 import type {BackendOptions, RequestCallback} from 'i18next-http-backend'
 
-import client from '~/sanity'
+import client from '~/sanity/client'
 
 export const supportedLngs = ['en_US', 'no', 'nl']
-const fallbackLng = supportedLngs[0]
-
-type KVObject = {key: string; text: string}
+export const fallbackLng = supportedLngs[0]
 
 export async function loadResources(lng: string, ns: string) {
-  let data
+  let data = {}
+  const queryParams = {language: lng, baseLanguage: fallbackLng, slug: `yeah`}
 
   if (ns === 'common') {
-    data = await client.fetch(
+    type KVObject = {key: string; text: string}
+
+    const labelArray = (await client.fetch(
       groq`*[_id == "labelGroup"][0].labels[]{
-      key,
-      // Pick language-specific object item
-      "text": coalesce(text[$language], text[$baseLanguage]),
-    }`,
-      {language: lng, baseLanguage: fallbackLng}
-    )
+        key,
+        // Pick language-specific object item
+        "text": coalesce(text[$language], text[$baseLanguage]),
+      }`,
+      queryParams
+    )) as KVObject[]
+
+    // Convert array of KV objects into a single object
+    if (labelArray.length) {
+      data = labelArray.reduce((acc: {[key: string]: string}, item: KVObject) => {
+        return {[item.key]: item.text, ...acc}
+      }, {})
+    }
   } else if (ns === 'home') {
     data = await client.fetch(
-      groq`*[_type == "presenter"][0]{
-          name,
-          // Pick language-specific array item
-          "title": coalesce(title[_key == $language][0].value, title[_key == $baseLanguage][0].value)
+      groq`{
+        "legalPages": *[_type == "legal" && defined(slug.current) && !(_id in path("drafts.**"))]{ _id, title, slug },
+        "title": "Course Platform"
       }`,
-      {language: lng, baseLanguage: fallbackLng}
+      queryParams
     )
   }
 
-  // Convert array of KV objects to a single object
-  const keyedData = Array.isArray(data)
-    ? data.reduce((acc: {[key: string]: string}, item: KVObject) => {
-        acc[item.key] = item.text
-        return acc
-      }, {})
-    : data
-
-  return keyedData
+  return data
 }
 
 export default {
@@ -57,7 +56,6 @@ export default {
     ) => {
       try {
         const [lng, ns] = url.split('|')
-        console.log({lng, ns})
         loadResources(lng, ns).then((response) => {
           callback(null, {
             data: response,
